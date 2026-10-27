@@ -1,0 +1,513 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>XLO APP</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #fff9cc;
+            margin: 0;
+        }
+
+        header {
+            background: #e31b23;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 20px auto;
+        }
+
+        .box, .product {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px #ddd;
+        }
+
+        .products {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .product img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        input, select, textarea {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 10px;
+            margin: 7px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        textarea {
+            height: 70px;
+        }
+
+        button {
+            background: #e31b23;
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            margin: 4px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #b80000;
+        }
+
+        .price {
+            color: #c90000;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #login {
+            max-width: 380px;
+            margin: 55px auto;
+            padding: 25px;
+            border-top: 6px solid #e31b23;
+            background: #fff3a6;
+        }
+
+        #login h2 {
+            color: #c90000;
+            text-align: center;
+        }
+
+        #login button {
+            width: 100%;
+            margin: 10px 0 0;
+            background: #e31b23;
+        }
+
+        #login button:hover {
+            background: #b80000;
+        }
+
+        header { border-bottom: 5px solid #ffdf00; }
+
+        .box { border: 1px solid #ffe45c; }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>XLO APP</h1>
+    <p>Buy Smart. Sell Easy.</p>
+</header>
+
+<div class="container">
+
+    <div id="login" class="box">
+        <h2>Welcome to XLO APP</h2>
+        <p style="text-align:center;">Login to continue</p>
+        <input id="username" type="text" placeholder="Enter your name" autocomplete="username">
+        <input id="password" type="password" placeholder="Enter your password" autocomplete="current-password">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div id="app" class="hidden">
+
+        <h2 id="welcome"></h2>
+        <button onclick="logout()">Logout</button>
+
+        <div class="box">
+            <h2>Search Products</h2>
+
+            <input id="search"
+                   placeholder="Search product name..."
+                   oninput="showProducts()">
+
+            <select id="category" onchange="showProducts()">
+                <option value="All">All Categories</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Mobiles">Mobiles</option>
+                <option value="Fashion">Fashion</option>
+                <option value="Books">Books</option>
+                <option value="Others">Others</option>
+            </select>
+        </div>
+
+        <div class="box">
+            <h2>Add a Listing</h2>
+
+            <input id="productName"
+                   placeholder="Product name">
+
+            <input id="productPrice"
+                   type="number"
+                   min="1"
+                   placeholder="Price in ₹">
+
+            <select id="productCategory">
+                <option value="Electronics">Electronics</option>
+                <option value="Mobiles">Mobiles</option>
+                <option value="Fashion">Fashion</option>
+                <option value="Books">Books</option>
+                <option value="Others">Others</option>
+            </select>
+
+            <label>Choose Product Photo</label>
+            <input id="productImage" type="file" accept="image/*">
+
+            <textarea id="description"
+                      placeholder="Product description"></textarea>
+
+            <button onclick="addProduct()">Post Product</button>
+        </div>
+
+        <h2>Browse Items</h2>
+        <div class="products" id="productList"></div>
+
+        <h2>My Items</h2>
+        <div class="products" id="myProducts"></div>
+
+        <h2>Purchase History</h2>
+        <div id="purchases"></div>
+
+    </div>
+</div>
+
+<script>
+var currentUser = "";
+
+var products = [
+    {
+        id: 1,
+        name: "Bluetooth Speaker",
+        price: 699,
+        category: "Electronics",
+        image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400",
+        description: "Portable speaker with clear sound",
+        seller: "Nila"
+    },
+    {
+        id: 2,
+        name: "Android Smartphone",
+        price: 7499,
+        category: "Mobiles",
+        image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400",
+        description: "Smartphone in good working condition",
+        seller: "Karthik"
+    },
+    {
+        id: 3,
+        name: "Travel Backpack",
+        price: 599,
+        category: "Fashion",
+        image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400",
+        description: "Lightweight backpack for daily use",
+        seller: "Meena"
+    },
+    {
+        id: 4,
+        name: "Python Programming Book",
+        price: 299,
+        category: "Books",
+        image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400",
+        description: "Beginner-friendly programming book",
+        seller: "Nila"
+    },
+    {
+        id: 5,
+        name: "LED Desk Lamp",
+        price: 349,
+        category: "Others",
+        image: "https://images.unsplash.com/photo-1503602642458-232111445657?w=400",
+        description: "Compact lamp for a study table",
+        seller: "Arun"
+    }
+];
+
+var purchases = [];
+var nextId = 5;
+
+function login() {
+    var name = document.getElementById("username").value.trim();
+    var password = document.getElementById("password").value;
+
+    if (name === "" || password === "") {
+        alert("Please enter both your name and password!");
+        return;
+    }
+
+    // Demo login only: this checks that both fields are filled.
+    currentUser = name;
+
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+
+    document.getElementById("welcome").textContent =
+        "Welcome, " + currentUser + "!";
+
+    showProducts();
+    showMyProducts();
+    showPurchases();
+}
+
+function logout() {
+    currentUser = "";
+
+    document.getElementById("app").classList.add("hidden");
+    document.getElementById("login").classList.remove("hidden");
+    document.getElementById("username").value = "";
+    document.getElementById("password").value = "";
+}
+
+function showProducts() {
+    var list = document.getElementById("productList");
+    var search = document.getElementById("search").value
+        .toLowerCase().trim();
+    var category = document.getElementById("category").value;
+
+    list.innerHTML = "";
+
+    var found = products.filter(function(p) {
+        return p.name.toLowerCase().includes(search) &&
+            (category === "All" || p.category === category);
+    });
+
+    if (found.length === 0) {
+        list.innerHTML = "<h3>No products found!</h3>";
+        return;
+    }
+
+    found.forEach(function(p) {
+        var div = document.createElement("div");
+        div.className = "product";
+
+        var img = document.createElement("img");
+        img.src = p.image;
+        img.alt = p.name;
+
+        img.onerror = function() {
+            this.onerror = null;
+            this.src = "https://placehold.co/400x250?text=Product";
+        };
+
+        var name = document.createElement("h3");
+        name.textContent = p.name;
+
+        var price = document.createElement("p");
+        price.className = "price";
+        price.textContent = "₹" + p.price;
+
+        var desc = document.createElement("p");
+        desc.textContent = p.description;
+
+        var seller = document.createElement("p");
+        seller.textContent = "Seller: " + p.seller;
+
+        var cat = document.createElement("p");
+        cat.textContent = "Category: " + p.category;
+
+        div.append(img, name, price, desc, seller, cat);
+
+        if (p.seller !== currentUser) {
+            var buy = document.createElement("button");
+            buy.textContent = "Buy Now";
+
+            buy.onclick = function() {
+                buyProduct(p.id);
+            };
+
+            div.appendChild(buy);
+        } else {
+            var own = document.createElement("p");
+            own.textContent = "Your Product";
+            div.appendChild(own);
+        }
+
+        list.appendChild(div);
+    });
+}
+
+function addProduct() {
+    var name = document.getElementById("productName").value.trim();
+    var price = Number(document.getElementById("productPrice").value);
+    var category = document.getElementById("productCategory").value;
+    var file = document.getElementById("productImage").files[0];
+    var description = document.getElementById("description").value.trim();
+
+    if (name === "" || price <= 0 || description === "") {
+        alert("Enter product name, valid price and description!");
+        return;
+    }
+
+    if (file && !file.type.startsWith("image/")) {
+        alert("Please choose an image file!");
+        return;
+    }
+
+    function saveProduct(image) {
+        products.push({
+            id: nextId++,
+            name: name,
+            price: price,
+            category: category,
+            image: image,
+            description: description,
+            seller: currentUser
+        });
+
+        document.getElementById("productName").value = "";
+        document.getElementById("productPrice").value = "";
+        document.getElementById("productImage").value = "";
+        document.getElementById("description").value = "";
+
+        document.getElementById("search").value = "";
+        document.getElementById("category").value = "All";
+
+        showProducts();
+        showMyProducts();
+
+        alert("Product posted successfully!");
+    }
+
+    if (file) {
+        var reader = new FileReader();
+
+        reader.onload = function(event) {
+            saveProduct(event.target.result);
+        };
+
+        reader.readAsDataURL(file);
+    } else {
+        saveProduct("https://placehold.co/400x250?text=Product");
+    }
+}
+
+function showMyProducts() {
+    var list = document.getElementById("myProducts");
+    list.innerHTML = "";
+
+    products.forEach(function(p) {
+        if (p.seller === currentUser) {
+            var div = document.createElement("div");
+            div.className = "product";
+
+            var img = document.createElement("img");
+            img.src = p.image;
+            img.alt = p.name;
+
+            var name = document.createElement("h3");
+            name.textContent = p.name;
+
+            var price = document.createElement("p");
+            price.className = "price";
+            price.textContent = "₹" + p.price;
+
+            var del = document.createElement("button");
+            del.textContent = "Delete Listing";
+
+            del.onclick = function() {
+                products = products.filter(function(item) {
+                    return item.id !== p.id;
+                });
+
+                showProducts();
+                showMyProducts();
+            };
+
+            div.append(img, name, price, del);
+            list.appendChild(div);
+        }
+    });
+
+    if (list.children.length === 0) {
+        list.textContent = "You have not listed any products.";
+    }
+}
+
+function buyProduct(id) {
+    var product = products.find(function(p) {
+        return p.id === id;
+    });
+
+    if (!product) {
+        alert("Product is not available.");
+        return;
+    }
+
+    if (product.seller === currentUser) {
+        alert("You cannot buy your own product!");
+        return;
+    }
+
+    if (!confirm("Buy " + product.name + " for ₹" + product.price + "?")) {
+        return;
+    }
+
+    purchases.push({
+        name: product.name,
+        price: product.price,
+        seller: product.seller
+    });
+
+    products = products.filter(function(p) {
+        return p.id !== id;
+    });
+
+    showProducts();
+    showMyProducts();
+    showPurchases();
+
+    alert("Demo purchase completed!");
+}
+
+function showPurchases() {
+    var list = document.getElementById("purchases");
+    list.innerHTML = "";
+
+    if (purchases.length === 0) {
+        list.textContent = "No purchases yet.";
+        return;
+    }
+
+    purchases.forEach(function(p, index) {
+        var div = document.createElement("div");
+        div.className = "box";
+
+        var title = document.createElement("h3");
+        title.textContent = "Purchase " + (index + 1);
+
+        var name = document.createElement("p");
+        name.textContent = "Product: " + p.name;
+
+        var price = document.createElement("p");
+        price.textContent = "Price: ₹" + p.price;
+
+        var seller = document.createElement("p");
+        seller.textContent = "Seller: " + p.seller;
+
+        div.append(title, name, price, seller);
+        list.appendChild(div);
+    });
+}
+</script>
+
+</body>
+</html>
