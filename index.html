@@ -121,17 +121,29 @@
 
 <div class="container">
 
+    <!-- LOGIN -->
     <div id="login" class="box">
         <h2>Welcome to XLO APP</h2>
         <p style="text-align:center;">Login to continue</p>
-        <input id="username" type="text" placeholder="Enter your name" autocomplete="username">
-        <input id="password" type="password" placeholder="Enter your password" autocomplete="current-password">
+
+        <input id="username" type="text"
+               placeholder="Enter your name">
+
+        <input id="password" type="password"
+               placeholder="Enter your password">
+
+        <select id="role">
+            <option value="buyer">Buyer Login</option>
+            <option value="seller">Seller Login</option>
+        </select>
+
         <button onclick="login()">Login</button>
     </div>
 
-    <div id="app" class="hidden">
+    <!-- BUYER DASHBOARD -->
+    <div id="buyerApp" class="hidden">
 
-        <h2 id="welcome"></h2>
+        <h2 id="buyerWelcome"></h2>
         <button onclick="logout()">Logout</button>
 
         <div class="box">
@@ -151,6 +163,20 @@
             </select>
         </div>
 
+        <h2>Browse Items</h2>
+        <div class="products" id="productList"></div>
+
+        <h2>Purchase History</h2>
+        <div id="purchases"></div>
+
+    </div>
+
+    <!-- SELLER DASHBOARD -->
+    <div id="sellerApp" class="hidden">
+
+        <h2 id="sellerWelcome"></h2>
+        <button onclick="logout()">Logout</button>
+
         <div class="box">
             <h2>Add a Listing</h2>
 
@@ -160,7 +186,7 @@
             <input id="productPrice"
                    type="number"
                    min="1"
-                   placeholder="Price in ₹">
+                   placeholder="Selling price in ₹">
 
             <select id="productCategory">
                 <option value="Electronics">Electronics</option>
@@ -179,22 +205,21 @@
             <button onclick="addProduct()">Post Product</button>
         </div>
 
-        <h2>Browse Items</h2>
-        <div class="products" id="productList"></div>
-
         <h2>My Items</h2>
         <div class="products" id="myProducts"></div>
 
-        <h2>Purchase History</h2>
-        <div id="purchases"></div>
+        <h2>Sales History</h2>
+        <div id="sales"></div>
 
     </div>
+
 </div>
 
 <script>
-var currentUser = "";
+let currentUser = "";
+let currentRole = "";
 
-var products = [
+let products = [
     {
         id: 1,
         name: "Bluetooth Speaker",
@@ -242,64 +267,98 @@ var products = [
     }
 ];
 
-var purchases = [];
-var nextId = 5;
+let purchases = [];
+let sales = [];
+let nextId = 6;
 
+
+// LOGIN
 function login() {
-    var name = document.getElementById("username").value.trim();
-    var password = document.getElementById("password").value;
 
-    if (name === "" || password === "") {
-        alert("Please enter both your name and password!");
+    let name = document.getElementById("username").value.trim();
+    let password = document.getElementById("password").value;
+    let role = document.getElementById("role").value;
+
+    if (!name || !password) {
+        alert("Please enter name and password!");
         return;
     }
 
-    // Demo login only: this checks that both fields are filled.
     currentUser = name;
+    currentRole = role;
 
     document.getElementById("login").classList.add("hidden");
-    document.getElementById("app").classList.remove("hidden");
 
-    document.getElementById("welcome").textContent =
-        "Welcome, " + currentUser + "!";
+    if (role === "buyer") {
 
-    showProducts();
-    showMyProducts();
-    showPurchases();
+        document.getElementById("buyerApp").classList.remove("hidden");
+        document.getElementById("sellerApp").classList.add("hidden");
+
+        document.getElementById("buyerWelcome").textContent =
+            "Welcome Buyer, " + currentUser + "!";
+
+        showProducts();
+        showPurchases();
+
+    } else {
+
+        document.getElementById("sellerApp").classList.remove("hidden");
+        document.getElementById("buyerApp").classList.add("hidden");
+
+        document.getElementById("sellerWelcome").textContent =
+            "Welcome Seller, " + currentUser + "!";
+
+        showMyProducts();
+        showSales();
+    }
 }
 
-function logout() {
-    currentUser = "";
 
-    document.getElementById("app").classList.add("hidden");
+// LOGOUT
+function logout() {
+
+    currentUser = "";
+    currentRole = "";
+
+    document.getElementById("buyerApp").classList.add("hidden");
+    document.getElementById("sellerApp").classList.add("hidden");
     document.getElementById("login").classList.remove("hidden");
+
     document.getElementById("username").value = "";
     document.getElementById("password").value = "";
 }
 
+
+// DISPLAY PRODUCTS FOR BUYERS
 function showProducts() {
-    var list = document.getElementById("productList");
-    var search = document.getElementById("search").value
+
+    let list = document.getElementById("productList");
+
+    let search = document.getElementById("search").value
         .toLowerCase().trim();
-    var category = document.getElementById("category").value;
+
+    let category = document.getElementById("category").value;
 
     list.innerHTML = "";
 
-    var found = products.filter(function(p) {
+    let found = products.filter(function(p) {
+
         return p.name.toLowerCase().includes(search) &&
             (category === "All" || p.category === category);
+
     });
 
     if (found.length === 0) {
-        list.innerHTML = "<h3>No products found!</h3>";
+        list.textContent = "No products found!";
         return;
     }
 
     found.forEach(function(p) {
-        var div = document.createElement("div");
+
+        let div = document.createElement("div");
         div.className = "product";
 
-        var img = document.createElement("img");
+        let img = document.createElement("img");
         img.src = p.image;
         img.alt = p.name;
 
@@ -308,26 +367,20 @@ function showProducts() {
             this.src = "https://placehold.co/400x250?text=Product";
         };
 
-        var name = document.createElement("h3");
+        let name = document.createElement("h3");
         name.textContent = p.name;
 
-        var price = document.createElement("p");
-        price.className = "price";
-        price.textContent = "₹" + p.price;
-
-        var desc = document.createElement("p");
+        let desc = document.createElement("p");
         desc.textContent = p.description;
 
-        var seller = document.createElement("p");
-        seller.textContent = "Seller: " + p.seller;
-
-        var cat = document.createElement("p");
+        let cat = document.createElement("p");
         cat.textContent = "Category: " + p.category;
 
-        div.append(img, name, price, desc, seller, cat);
+        div.append(img, name, desc, cat);
 
         if (p.seller !== currentUser) {
-            var buy = document.createElement("button");
+
+            let buy = document.createElement("button");
             buy.textContent = "Buy Now";
 
             buy.onclick = function() {
@@ -335,24 +388,34 @@ function showProducts() {
             };
 
             div.appendChild(buy);
+
         } else {
-            var own = document.createElement("p");
+
+            let own = document.createElement("p");
             own.textContent = "Your Product";
             div.appendChild(own);
         }
 
         list.appendChild(div);
+
     });
 }
 
-function addProduct() {
-    var name = document.getElementById("productName").value.trim();
-    var price = Number(document.getElementById("productPrice").value);
-    var category = document.getElementById("productCategory").value;
-    var file = document.getElementById("productImage").files[0];
-    var description = document.getElementById("description").value.trim();
 
-    if (name === "" || price <= 0 || description === "") {
+// ADD PRODUCT FOR SELLER
+function addProduct() {
+
+    let name = document.getElementById("productName").value.trim();
+
+    let price = Number(document.getElementById("productPrice").value);
+
+    let category = document.getElementById("productCategory").value;
+
+    let file = document.getElementById("productImage").files[0];
+
+    let description = document.getElementById("description").value.trim();
+
+    if (!name || price <= 0 || !description) {
         alert("Enter product name, valid price and description!");
         return;
     }
@@ -363,6 +426,7 @@ function addProduct() {
     }
 
     function saveProduct(image) {
+
         products.push({
             id: nextId++,
             name: name,
@@ -378,57 +442,61 @@ function addProduct() {
         document.getElementById("productImage").value = "";
         document.getElementById("description").value = "";
 
-        document.getElementById("search").value = "";
-        document.getElementById("category").value = "All";
-
-        showProducts();
         showMyProducts();
 
         alert("Product posted successfully!");
     }
 
     if (file) {
-        var reader = new FileReader();
+
+        let reader = new FileReader();
 
         reader.onload = function(event) {
             saveProduct(event.target.result);
         };
 
         reader.readAsDataURL(file);
+
     } else {
+
         saveProduct("https://placehold.co/400x250?text=Product");
     }
 }
 
+
+// SELLER'S OWN PRODUCTS
 function showMyProducts() {
-    var list = document.getElementById("myProducts");
+
+    let list = document.getElementById("myProducts");
     list.innerHTML = "";
 
     products.forEach(function(p) {
+
         if (p.seller === currentUser) {
-            var div = document.createElement("div");
+
+            let div = document.createElement("div");
             div.className = "product";
 
-            var img = document.createElement("img");
+            let img = document.createElement("img");
             img.src = p.image;
             img.alt = p.name;
 
-            var name = document.createElement("h3");
+            let name = document.createElement("h3");
             name.textContent = p.name;
 
-            var price = document.createElement("p");
+            let price = document.createElement("p");
             price.className = "price";
             price.textContent = "₹" + p.price;
 
-            var del = document.createElement("button");
+            let del = document.createElement("button");
             del.textContent = "Delete Listing";
 
             del.onclick = function() {
+
                 products = products.filter(function(item) {
                     return item.id !== p.id;
                 });
 
-                showProducts();
                 showMyProducts();
             };
 
@@ -442,8 +510,11 @@ function showMyProducts() {
     }
 }
 
+
+// BUY PRODUCT
 function buyProduct(id) {
-    var product = products.find(function(p) {
+
+    let product = products.find(function(p) {
         return p.id === id;
     });
 
@@ -457,14 +528,22 @@ function buyProduct(id) {
         return;
     }
 
-    if (!confirm("Buy " + product.name + " for ₹" + product.price + "?")) {
+    if (!confirm("Continue with this purchase?")) {
         return;
     }
 
+    // Buyer history does not show seller's selling price.
     purchases.push({
         name: product.name,
-        price: product.price,
-        seller: product.seller
+        buyer: currentUser,
+        date: new Date().toLocaleString()
+    });
+
+    // Seller history does not show buyer's purchase price.
+    sales.push({
+        name: product.name,
+        seller: product.seller,
+        date: new Date().toLocaleString()
     });
 
     products = products.filter(function(p) {
@@ -472,41 +551,81 @@ function buyProduct(id) {
     });
 
     showProducts();
-    showMyProducts();
     showPurchases();
 
     alert("Demo purchase completed!");
 }
 
+
+// BUYER PURCHASE HISTORY
 function showPurchases() {
-    var list = document.getElementById("purchases");
+
+    let list = document.getElementById("purchases");
     list.innerHTML = "";
 
-    if (purchases.length === 0) {
+    let myPurchases = purchases.filter(function(p) {
+        return p.buyer === currentUser;
+    });
+
+    if (myPurchases.length === 0) {
         list.textContent = "No purchases yet.";
         return;
     }
 
-    purchases.forEach(function(p, index) {
-        var div = document.createElement("div");
+    myPurchases.forEach(function(p, index) {
+
+        let div = document.createElement("div");
         div.className = "box";
 
-        var title = document.createElement("h3");
+        let title = document.createElement("h3");
         title.textContent = "Purchase " + (index + 1);
 
-        var name = document.createElement("p");
+        let name = document.createElement("p");
         name.textContent = "Product: " + p.name;
 
-        var price = document.createElement("p");
-        price.textContent = "Price: ₹" + p.price;
+        let date = document.createElement("p");
+        date.textContent = "Date: " + p.date;
 
-        var seller = document.createElement("p");
-        seller.textContent = "Seller: " + p.seller;
-
-        div.append(title, name, price, seller);
+        div.append(title, name, date);
         list.appendChild(div);
     });
 }
+
+
+// SELLER SALES HISTORY
+function showSales() {
+
+    let list = document.getElementById("sales");
+    list.innerHTML = "";
+
+    let mySales = sales.filter(function(s) {
+        return s.seller === currentUser;
+    });
+
+    if (mySales.length === 0) {
+        list.textContent = "No sales yet.";
+        return;
+    }
+
+    mySales.forEach(function(s, index) {
+
+        let div = document.createElement("div");
+        div.className = "box";
+
+        let title = document.createElement("h3");
+        title.textContent = "Sale " + (index + 1);
+
+        let name = document.createElement("p");
+        name.textContent = "Product: " + s.name;
+
+        let date = document.createElement("p");
+        date.textContent = "Date: " + s.date;
+
+        div.append(title, name, date);
+        list.appendChild(div);
+    });
+}
+
 </script>
 
 </body>
